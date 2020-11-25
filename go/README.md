@@ -1,1 +1,1 @@
-# Advent of Code &emdash; Go
+# Advent of Code -- Go
