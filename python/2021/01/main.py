@@ -1,4 +1,3 @@
-
 import os
 import sys
 from pathlib import Path
@@ -19,7 +18,7 @@ def part_1(lines: List[int]) -> int:
 
 
 def part_2(lines: List[int]) -> int:
-    return sum(sum(lines[i+1:i+4]) > sum(lines[i:i+3])  for i in range(len(lines)+3))
+    return sum(sum(lines[i+1:i+4]) > sum(lines[i:i+3])  for i in range(len(lines)-4))
 
 
 if __name__ == "__main__":
