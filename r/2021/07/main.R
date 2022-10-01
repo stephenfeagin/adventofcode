@@ -9,11 +9,13 @@ read_input <- function(fname) {
   numbers
 }
 
+# When cost is related to absolute distance, median is the best approximation that minimizes cost
 part_1 <- function(input) {
   best_position <- median(input)
   sum(abs(input - best_position))
 }
 
+# For part 2, cost is more than just the distance between two points
 get_fuel_cost <- function(start, stop) {
   cost <- 0
   for (i in seq_len(abs(start - stop))) {
@@ -26,6 +28,7 @@ get_total_fuel_cost <- function(vec, pos) {
   sum(sapply(vec, get_fuel_cost, stop = pos))
 }
 
+# When cost is measured by compounding distance, mean is the best approximation that minimizes cost
 part_2 <- function(input) {
   mean_position <- mean(input)
   mean_floor <- floor(mean_position)
