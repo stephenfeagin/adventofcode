@@ -6,13 +6,14 @@ import (
 	"log"
 )
 
-func main() {
-	input := readInput("input.txt")
-	fmt.Printf("Part 1: %d\n", part1(input))
-	fmt.Printf("Part 2: %d\n", part2(input))
+func Solve(fname string) {
+	input := ReadInput(fname)
+	solution1 := Part1(input)
+	solution2 := Part2(input)
+	fmt.Printf("Part 1: %d\nPart 2: %d\n", solution1, solution2)
 }
 
-func readInput(fname string) string {
+func ReadInput(fname string) string {
 	content, err := ioutil.ReadFile(fname)
 	if err != nil {
 		log.Fatal(err)
@@ -20,7 +21,7 @@ func readInput(fname string) string {
 	return string(content)
 }
 
-func part1(input string) int {
+func Part1(input string) int {
 	floor := 0
 	for _, letter := range input {
 		if letter == '(' {
@@ -32,7 +33,7 @@ func part1(input string) int {
 	return floor
 }
 
-func part2(input string) int {
+func Part2(input string) int {
 	floor := 0
 	for i, letter := range input {
 		if letter == '(' {
@@ -45,4 +46,7 @@ func part2(input string) int {
 		}
 	}
 	return 0
+}
+
+func main() {
 }

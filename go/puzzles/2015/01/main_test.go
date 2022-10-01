@@ -20,7 +20,7 @@ func TestPart1(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.input, func(t *testing.T) {
-			got := part1(testCase.input)
+			got := Part1(testCase.input)
 			if got != testCase.want {
 				t.Fail()
 			}
@@ -38,7 +38,7 @@ func TestPart2(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.input, func(t *testing.T) {
-			got := part2(testCase.input)
+			got := Part2(testCase.input)
 			if got != testCase.want {
 				t.Fail()
 			}

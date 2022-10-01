@@ -10,17 +10,18 @@ import (
 	"strings"
 )
 
-func main() {
-	boxes := readInput("input.txt")
-	fmt.Printf("Part 1: %d\n", part1(boxes))
-	fmt.Printf("Part 2: %d\n", part2(boxes))
+func Solve(fname string) {
+	input := ReadInput(fname)
+	solution1 := Part1(input)
+	solution2 := Part2(input)
+	fmt.Printf("Part 1: %d\nPart 2: %d\n", solution1, solution2)
 }
 
 type box struct {
 	l, w, h int
 }
 
-func readInput(fname string) []box {
+func ReadInput(fname string) []box {
 	file, err := os.Open(fname)
 	if err != nil {
 		log.Fatal(err)
@@ -63,7 +64,7 @@ func measurePaper(b box) int {
 	return surfaceArea + sides[0]
 }
 
-func part1(boxes []box) int {
+func Part1(boxes []box) int {
 	var paper int
 	for _, b := range boxes {
 		paper += measurePaper(b)
@@ -78,10 +79,13 @@ func measureRibbon(b box) int {
 	return perimeter + b.h*b.l*b.w
 }
 
-func part2(boxes []box) int {
+func Part2(boxes []box) int {
 	var ribbon int
 	for _, b := range boxes {
 		ribbon += measureRibbon(b)
 	}
 	return ribbon
+}
+
+func main() {
 }
