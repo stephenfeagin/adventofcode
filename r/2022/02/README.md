@@ -1,0 +1,340 @@
+# Advent of Code: 2022 Day 2 in R
+2023-09-07
+
+Below is my solution for Advent of Code 2022 day 2 in R.
+
+## The Brief
+
+> The Elves begin to set up camp on the beach. To decide whose tent gets
+> to be closest to the snack storage, a giant Rock Paper Scissors
+> tournament is already in progress.
+>
+> Rock Paper Scissors is a game between two players. Each game contains
+> many rounds; in each round, the players each simultaneously choose one
+> of Rock, Paper, or Scissors using a hand shape. Then, a winner for
+> that round is selected: Rock defeats Scissors, Scissors defeats Paper,
+> and Paper defeats Rock. If both players choose the same shape, the
+> round instead ends in a draw.
+>
+> Appreciative of your help yesterday, one Elf gives you an encrypted
+> strategy guide (your puzzle input) that they say will be sure to help
+> you win. “The first column is what your opponent is going to play: A
+> for Rock, B for Paper, and C for Scissors. The second column–”
+> Suddenly, the Elf is called away to help with someone’s tent.
+
+## Part 1
+
+> The second column, you reason, must be what you should play in
+> response: X for Rock, Y for Paper, and Z for Scissors. Winning every
+> time would be suspicious, so the responses must have been carefully
+> chosen.
+>
+> The winner of the whole tournament is the player with the highest
+> score. Your total score is the sum of your scores for each round. The
+> score for a single round is the score for the shape you selected (1
+> for Rock, 2 for Paper, and 3 for Scissors) plus the score for the
+> outcome of the round (0 if you lost, 3 if the round was a draw, and 6
+> if you won).
+>
+> Since you can’t be sure if the Elf is trying to help you or trick you,
+> you should calculate the score you would get if you were to follow the
+> strategy guide.
+>
+> For example, suppose you were given the following strategy guide:
+
+    A Y
+    B X
+    C Z
+
+> This strategy guide predicts and recommends the following:
+>
+> - In the first round, your opponent will choose Rock (A), and you
+>   should choose Paper (Y). This ends in a win for you with a score of
+>   8 (2 because you chose Paper + 6 because you won).
+> - In the second round, your opponent will choose Paper (B), and you
+>   should choose Rock (X). This ends in a loss for you with a score of
+>   1 (1 + 0).
+> - The third round is a draw with both players choosing Scissors,
+>   giving you a score of 3 + 3 = 6.
+>
+> In this example, if you were to follow the strategy guide, you would
+> get a total score of 15 (8 + 1 + 6).
+>
+> What would your total score be if everything goes exactly according to
+> your strategy guide?
+
+### Read Input
+
+As always, the first step is to read the input. I have saved the example
+data in [test_input.txt](test_input.txt) and the real puzzle input in
+[input.txt](input.txt). I know that the input has two letters per line
+separated by a space, which is exactly what `read.delim()` is made for.
+I’ll specify `header = FALSE` and `sep = " "`, and keep the default
+variable names `V1` and `V2`.
+
+``` r
+read_input <- function(file) {
+  read.delim(file, header = FALSE, sep = " ")
+}
+```
+
+Just to see what the test data looks like:
+
+``` r
+test_data <- read_input("test_input.txt")
+test_data
+```
+
+      V1 V2
+    1  A  Y
+    2  B  X
+    3  C  Z
+
+### Scoring Function
+
+We need to create a function that will determine our total score based
+on what shape we played and what the outcome was. Remember for the first
+column, A is Rock, B is Paper, and C is Scissors. For the second column,
+X is Rock, Y is Paper, and Z is scissors. For the outcomes, you get 0
+points for losing, 3 for drawing, and 6 for winning.
+
+First, we have to determine the outcome. Unfortunately, this is somewhat
+tedious but the most straightforward way is to code it by hand.
+
+``` r
+find_outcome <- function(p1, p2) {
+  if (p1 == "A") {
+    if (p2 == "X") return(3) # Rock-Rock=Draw
+    if (p2 == "Y") return(6) # Rock-Paper=Win
+    if (p2 == "Z") return(0) # Rock-Scissors=Lose
+  }
+  if (p1 == "B") {
+    if (p2 == "X") return(0) # Paper-Rock=Lose
+    if (p2 == "Y") return(3) # Paper-Paper=Draw
+    if (p2 == "Z") return(6) # Paper-Scissors=Win
+  }
+  if (p1 == "C") {
+    if (p2 == "X") return(6) # Scissors-Rock=Win
+    if (p2 == "Y") return(0) # Scissors-Paper=Lose
+    if (p2 == "Z") return(3) # Scissors-Scissors=Draw
+  }
+}
+```
+
+We can create a simple vector for points based on shape selection. You
+get 1 point for Rock (`"X"`), 2 points for Paper (`"Y"`), and 3 points
+for Scissors (`"Z"`). So I can make a vector of those shapes and pull
+out the scores using `which()`.
+
+``` r
+find_shape_score <- function(shape) {
+  shape_scores <- c("X", "Y", "Z")
+  which(shape_scores == shape)
+}
+```
+
+Finally, we need to combine those to get the total score.
+
+``` r
+find_total_score <- function(p1, p2) {
+  outcome <- find_outcome(p1, p2)
+  shape_score <- find_shape_score(p2)
+  outcome + shape_score
+}
+```
+
+Let’s apply that to the example data. I will add a column to the
+`test_data` data frame with the expected results from the example:
+
+``` r
+test_data$expected <- c(8, 1, 6)
+```
+
+Then we can add a column with the calculated scores. Because I haven’t
+written the functions to work with vectors of inputs, I iterate over the
+data frame.
+
+``` r
+for (i in seq_len(nrow(test_data))) {
+  test_data$calculated[i] <- find_total_score(test_data$V1[i], test_data$V2[i])
+}
+test_data
+```
+
+      V1 V2 expected calculated
+    1  A  Y        8          8
+    2  B  X        1          1
+    3  C  Z        6          6
+
+And in code, we can see:
+
+``` r
+all(test_data$expected == test_data$calculated)
+```
+
+    [1] TRUE
+
+I’ll just put that into a function to re-use for the real data:
+
+``` r
+calculate_all_scores <- function(input_data) {
+  calculated <- numeric(nrow(input_data))
+  for (i in seq_len(nrow(input_data))) {
+    calculated[i] <- find_total_score(input_data$V1[i], input_data$V2[i])
+  }
+  calculated
+}
+```
+
+So the last part is getting the sum:
+
+``` r
+part_1 <- function(input_data) {
+  calculated <- calculate_all_scores(input_data)
+  sum(calculated)
+}
+```
+
+Try it with the test data:
+
+``` r
+part_1(test_data)
+```
+
+    [1] 15
+
+Which is what we expect.
+
+Now we try it on the real data:
+
+``` r
+real_data <- read_input("input.txt")
+part_1(real_data)
+```
+
+    [1] 12855
+
+And that’s correct!
+
+## Part 2
+
+> The Elf finishes helping with the tent and sneaks back over to you.
+> “Anyway, the second column says how the round needs to end: X means
+> you need to lose, Y means you need to end the round in a draw, and Z
+> means you need to win. Good luck!”
+>
+> The total score is still calculated in the same way, but now you need
+> to figure out what shape to choose so the round ends as indicated. The
+> example above now goes like this:
+>
+> - In the first round, your opponent will choose Rock (A), and you need
+>   the round to end in a draw (Y), so you also choose Rock. This gives
+>   you a score of 1 + 3 = 4.
+> - In the second round, your opponent will choose Paper (B), and you
+>   choose Rock so you lose (X) with a score of 1 + 0 = 1.
+> - In the third round, you will defeat your opponent’s Scissors with
+>   Rock for a score of 1 + 6 = 7.
+>
+> Now that you’re correctly decrypting the ultra top secret strategy
+> guide, you would get a total score of 12.
+>
+> Following the Elf’s instructions for the second column, what would
+> your total score be if everything goes exactly according to your
+> strategy guide?
+
+So now, instead of finding the outcome from each player’s shape, we need
+to find the right shape to play based on the outcome. `"X"` means lose,
+`"Y"` means draw, and `"Z"` means win.
+
+``` r
+find_correct_shape <- function(p1, outcome) {
+  if (p1 == "A") {
+    if (outcome == "X") return("scissors") # Rock+Lose=Scissors
+    if (outcome == "Y") return("rock")     # Rock+Draw=Rock
+    if (outcome == "Z") return("paper")    # Rock+Win=Paper
+  }
+  if (p1 == "B") {
+    if (outcome == "X") return("rock")     # Paper+Lose=Rock
+    if (outcome == "Y") return("paper")    # Paper+Draw=Paper
+    if (outcome == "Z") return("scissors") # Paper+Win=Scissors
+  }
+  if (p1 == "C") {
+    if (outcome == "X") return("paper")    # Scissors+Lose=Paper
+    if (outcome == "Y") return("scissors") # Scissors+Draw=Scissors
+    if (outcome == "Z") return("rock")     # Scissors+Win=Rock
+  }
+}
+```
+
+I’ll make a new `find_shape_score()` function using the actual shape
+names:
+
+``` r
+find_shape_score <- function(shape) {
+  shape_scores <- c("rock", "paper", "scissors")
+  which(shape_scores == shape)
+}
+```
+
+I also need to make a lookup for outcome points. I could write this into
+the bigger functions but I’ll make it its own just to be super clear
+about what’s going on.
+
+``` r
+find_outcome_score <- function(outcome) {
+  if (outcome == "X") return(0)
+  if (outcome == "Y") return(3)
+  if (outcome == "Z") return(6)
+}
+```
+
+I need to make a new `find_total_score()` function as well:
+
+``` r
+find_total_score <- function(p1, outcome) {
+  correct_shape <- find_correct_shape(p1, outcome)
+  shape_score <- find_shape_score(correct_shape)
+  outcome_score <- find_outcome_score(outcome)
+  shape_score + outcome_score
+}
+```
+
+I’ll test this out again on the test data. I read it in one more time
+just to get a clean slate since I added some extra columns in part 1. I
+can still use the same `calculate_all_scores()` function because I kept
+the same names for the intermediate functions, and that function just
+applies `find_total_score()` to the rows of the data frame.
+
+``` r
+test_data <- read_input("test_input.txt")
+test_data$expected <- c(4, 1, 7)
+test_data$calculated <- calculate_all_scores(test_data)
+test_data
+```
+
+      V1 V2 expected calculated
+    1  A  Y        4          4
+    2  B  X        1          1
+    3  C  Z        7          7
+
+Looks good! Now we just come up with the total:
+
+``` r
+sum(test_data$calculated)
+```
+
+    [1] 12
+
+Which matches the example. Now for the real data:
+
+``` r
+part_2 <- function(input_data) {
+  calculated <- calculate_all_scores(input_data)
+  sum(calculated)
+}
+part_2(real_data)
+```
+
+    [1] 13726
+
+Which is right! There we go.
