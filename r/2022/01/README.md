@@ -77,7 +77,7 @@ I want to go through the list and add up the amounts until I get to an
 NA, then keep track of what the highest total is.
 
 ``` r
-parse_input <- function(input_data) {
+part_1 <- function(input_data) {
   highest_total <- 0
   running_total <- 0
   for (i in input_data) {
@@ -90,15 +90,25 @@ parse_input <- function(input_data) {
     }
     running_total <- running_total + i
   }
+  # Because the is.na() doesn't capture the last elf, we have to do that check manually
+  if (running_total > highest_total) {
+    highest_total <- running_total
+  }
   highest_total
 }
 ```
+
+Lines 2-3  
+Initialize some variables
+
+Line 4  
+Start a loop
 
 ### Test Data
 
 ``` r
 test_input <- read_input("test_input.txt")
-parse_input(test_input)
+part_1(test_input)
 ```
 
     [1] 24000
@@ -106,8 +116,79 @@ parse_input(test_input)
 ### Real Data
 
 ``` r
-puzzle_input <- read_input("input.txt")
-parse_input(puzzle_input)
+real_input <- read_input("input.txt")
+part_1(real_input)
 ```
 
     [1] 71924
+
+## Part 2
+
+By the time you calculate the answer to the Elves’ question, they’ve
+already realized that the Elf carrying the most Calories of food might
+eventually run out of snacks.
+
+To avoid this unacceptable situation, the Elves would instead like to
+know the total Calories carried by the top three Elves carrying the most
+Calories. That way, even if one of those Elves runs out of snacks, they
+still have two backups.
+
+In the example above, the top three Elves are the fourth Elf (with
+`24000` Calories), then the third Elf (with `11000` Calories), then the
+fifth Elf (with `10000` Calories). The sum of the Calories carried by
+these three elves is `45000.`
+
+Find the top three Elves carrying the most Calories. How many Calories
+are those Elves carrying in total?
+
+### Parse Input
+
+We can use the same input data as before and we don’t need to mess with
+the function to read it in. What I will do now, instead of keeping track
+of the single highest total, I will just populate a vector with all of
+the totals, sort it, and then take the three highest values. I can
+figure out the size of vector that I need by getting the number of `NA`s
+and adding one – there is an `NA` between every Elf, but none after the
+last one, so that has to be added on.
+
+``` r
+part_2 <- function(input_data) {
+  elf_totals <- numeric(sum(is.na(input_data)) + 1)
+  
+  current_elf <- 1
+  running_total <- 0
+  for (i in seq_along(input_data)) {
+    if (i == length(input_data)) {
+      running_total <- running_total + input_data[i]
+      elf_totals[current_elf] <- running_total
+    }
+    if (is.na(input_data[i])) {
+      elf_totals[current_elf] <- running_total
+      running_total <- 0
+      current_elf <- current_elf + 1
+      next
+    }
+    running_total <- running_total + input_data[i]
+  }
+  sum(sort(elf_totals, decreasing = TRUE)[1:3])
+}
+part_2(test_input)
+```
+
+    [1] 45000
+
+### Test Data
+
+``` r
+part_2(test_input)
+```
+
+    [1] 45000
+
+### Real Data
+
+``` r
+part_2(real_input)
+```
+
+    [1] 210406

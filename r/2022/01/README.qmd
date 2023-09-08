@@ -59,21 +59,32 @@ I want to go through the list and add up the amounts until I get to an NA, then 
 
 ```{r}
 part_1 <- function(input_data) {
-  highest_total <- 0
-  running_total <- 0
-  for (i in input_data) {
-    if (is.na(i)) {
-      if (running_total > highest_total) {
-        highest_total <- running_total
-      }
-      running_total <- 0
-      next
+  highest_total <- 0 # <1>
+  running_total <- 0 # <1>
+  for (i in input_data) { # <2>
+    if (is.na(i)) { # <3>
+      if (running_total > highest_total) { # <3>
+        highest_total <- running_total # <3>
+      } # <3>
+      running_total <- 0 # <4>
+      next # <5>
     }
-    running_total <- running_total + i
+    running_total <- running_total + i # <6>
+  }
+  if (running_total > highest_total) { # <7>
+    highest_total <- running_total # <7>
   }
   highest_total
 }
 ```
+1. Initialize variables to use in the loop
+2. Iterate over each element in `input_data`
+3. If `is.na(i)` we know that we've reached the end of the Elf's values, so we can check the running total against the highest total that we've seen
+4. Re-set the `running_total` variable to 0 so that we can start clean with the next Elf
+5. We use `next` to move onto the next iteration of the loop so that we don't try to do calculations on `NA` 
+6. If `!is.na(i)` then we just add the current element to the running total
+7. Finally, we know that checking `is.na(i)` will not capture the elements for the last Elf in the input. So after the loop, we check one last time if `running_total > highest_total`, just to check for that last Elf.
+
 
 ### Test Data
 
@@ -110,6 +121,10 @@ part_2 <- function(input_data) {
   current_elf <- 1
   running_total <- 0
   for (i in seq_along(input_data)) {
+    if (i == length(input_data)) {
+      running_total <- running_total + input_data[i]
+      elf_totals[current_elf] <- running_total
+    }
     if (is.na(input_data[i])) {
       elf_totals[current_elf] <- running_total
       running_total <- 0
@@ -118,11 +133,9 @@ part_2 <- function(input_data) {
     }
     running_total <- running_total + input_data[i]
   }
-  # the last Elf doesn't get caught by the is.na() check
-  # so we have to populate the last one manually
-  elf_totals[length(elf_totals)] <- running_total
   sum(sort(elf_totals, decreasing = TRUE)[1:3])
 }
+part_2(test_input)
 ```
 
 ### Test Data
