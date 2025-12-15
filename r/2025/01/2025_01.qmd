@@ -1,0 +1,249 @@
+---
+title: "Day 1: Secret Entrance"
+format: html
+---
+
+## Prompt
+
+The Elves have good news and bad news.
+
+The good news is that they've discovered project management! This has given them the tools they need to prevent their usual Christmas emergency. For example, they now know that the North Pole decorations need to be finished soon so that other critical tasks can start on time.
+
+The bad news is that they've realized they have a different emergency: according to their resource planning, none of them have any time left to decorate the North Pole!
+
+To save Christmas, the Elves need you to finish decorating the North Pole by December 12th.
+
+Collect stars by solving puzzles. Two puzzles will be made available on each day; the second puzzle is unlocked when you complete the first. Each puzzle grants one star. Good luck!
+
+## Part 1
+
+You arrive at the secret entrance to the North Pole base ready to start decorating. Unfortunately, the password seems to have been changed, so you can't get in. A document taped to the wall helpfully explains:
+
+"Due to new security protocols, the password is locked in the safe below. Please see the attached document for the new combination."
+
+The safe has a dial with only an arrow on it; around the dial are the numbers 0 through 99 in order. As you turn the dial, it makes a small click noise as it reaches each number.
+
+The attached document (your puzzle input) contains a sequence of rotations, one per line, which tell you how to open the safe. A rotation starts with an L or R which indicates whether the rotation should be to the left (toward lower numbers) or to the right (toward higher numbers). Then, the rotation has a distance value which indicates how many clicks the dial should be rotated in that direction.
+
+So, if the dial were pointing at 11, a rotation of R8 would cause the dial to point at 19. After that, a rotation of L19 would cause it to point at 0.
+
+Because the dial is a circle, turning the dial left from 0 one click makes it point at 99. Similarly, turning the dial right from 99 one click makes it point at 0.
+
+So, if the dial were pointing at 5, a rotation of L10 would cause it to point at 95. After that, a rotation of R5 could cause it to point at 0.
+
+The dial starts by pointing at 50.
+
+You could follow the instructions, but your recent required official North Pole secret entrance security training seminar taught you that the safe is actually a decoy. The actual password is the number of times the dial is left pointing at 0 after any rotation in the sequence.
+
+For example, suppose the attached document contained the following rotations:
+
+```
+L68
+L30
+R48
+L5
+R60
+L55
+L1
+L99
+R14
+L82
+```
+
+Following these rotations would cause the dial to move as follows:
+
+The dial starts by pointing at 50.
+The dial is rotated L68 to point at 82.
+The dial is rotated L30 to point at 52.
+The dial is rotated R48 to point at 0.
+The dial is rotated L5 to point at 95.
+The dial is rotated R60 to point at 55.
+The dial is rotated L55 to point at 0.
+The dial is rotated L1 to point at 99.
+The dial is rotated L99 to point at 0.
+The dial is rotated R14 to point at 14.
+The dial is rotated L82 to point at 32.
+Because the dial points at 0 a total of three times during this process, the password in this example is 3.
+
+Analyze the rotations in your attached document. What's the actual password to open the door?
+
+### Solution
+
+We first read in the instructions. In this case it's very simple to just read the input txt file.
+
+```{r}
+#| warning: false
+input <- readLines("test_input.txt")
+```
+
+We then need to parse the instruction:
+
+```{r}
+get_instructions <- function(steps) {
+  # Get a list of all steps with characters split
+  split_steps <- strsplit(steps, "")
+  
+  # Initialize empty vectors for direction markers and digits
+  direction_vector <- character(length(steps))
+  digits_vector <- integer(length(steps))
+  
+  # Iterate over the split strings
+  for (i in seq_along(split_steps)) {
+    # Extract the direction and assign it to the vector
+    direction_vector[i] <- split_steps[[i]][1]
+    
+    # Get the remaining characters and convert them to integer,
+    # then assign to the vector
+    digits <- split_steps[[i]][2:length(split_steps[[i]])]
+    digits_vector[i] <- as.integer(paste0(digits, collapse = ""))
+  }
+  
+  # Return a dataframe with the steps
+  data.frame(direction = direction_vector, digits = digits_vector)
+}
+```
+
+Next, we define a function to move the dial. It is a circular dial from 0 to 99, which means that it will roll back over to 0 when it passes 99. To account for this, we need to take the modulo of 100.
+
+```{r}
+move_dial <- function(position, instruction) {
+  if (instruction$direction == "L") {
+    return((position - instruction$digits) %% 100)
+  } else if (instruction$direction == "R") {
+    return((position + instruction$digits) %% 100)
+  } else {
+    stop("Invalid input")
+  }
+}
+```
+
+I'll create a function to iterate over the rows of the dataframe and execute `move_dial()`, logging each time the dial lands on 0.
+
+```{r}
+solve_part_1 <- function(input) {
+  # Start at position = 50
+  position <- 50
+  
+  # Initialize a variable for the number of times we land on 0
+  lands_on_zero <- 0
+  
+  # Parse the input
+  instructions <- get_instructions(input)
+  
+  # Iterate over the rows
+  for (i in seq_len(nrow(instructions))) {
+    position <- move_dial(position, instructions[i, ])
+    if (position == 0) {
+      lands_on_zero <- lands_on_zero + 1
+    }
+  }
+  
+  lands_on_zero
+}
+```
+
+We can then test it out:
+
+```{r}
+#| warning: false
+test_input <- readLines("test_input.txt")
+solve_part_1(test_input)
+```
+
+That's what we're supposed to get! Now for the real data
+
+```{r}
+#| warning: false
+real_input <- readLines("input.txt")
+solve_part_1(real_input)
+```
+
+And that's the correct answer!
+
+## Part 2
+
+### Prompt
+
+You're sure that's the right password, but the door won't open. You knock, but nobody answers. You build a snowman while you think.
+
+As you're rolling the snowballs for your snowman, you find another security document that must have fallen into the snow:
+
+"Due to newer security protocols, please use password method 0x434C49434B until further notice."
+
+You remember from the training seminar that "method 0x434C49434B" means you're actually supposed to count the number of times any click causes the dial to point at 0, regardless of whether it happens during a rotation or at the end of one.
+
+Following the same rotations as in the above example, the dial points at zero a few extra times during its rotations:
+
+The dial starts by pointing at 50.
+The dial is rotated L68 to point at 82; during this rotation, it points at 0 once.
+The dial is rotated L30 to point at 52.
+The dial is rotated R48 to point at 0.
+The dial is rotated L5 to point at 95.
+The dial is rotated R60 to point at 55; during this rotation, it points at 0 once.
+The dial is rotated L55 to point at 0.
+The dial is rotated L1 to point at 99.
+The dial is rotated L99 to point at 0.
+The dial is rotated R14 to point at 14.
+The dial is rotated L82 to point at 32; during this rotation, it points at 0 once.
+In this example, the dial points at 0 three times at the end of a rotation, plus three more times during a rotation. So, in this example, the new password would be 6.
+
+Be careful: if the dial were pointing at 50, a single rotation like R1000 would cause the dial to point at 0 ten times before returning back to 50!
+
+Using password method 0x434C49434B, what is the password to open the door?
+
+### Solution
+
+I'm going to attempt a brute force solution and hope it isn't dreadfully slow. Instead of moving the dial all x steps at once, I will use a loop to increment it one step at a time for the prescribed number of steps, and any time it lands on zero I will add to the running total.
+
+```{r}
+move_dial <- function(position, instructions) {
+  
+  # Initialize a variable to count when it hits zero
+  zero_count <- 0
+  
+  # First iterate over all rows of the instructions dataframe
+  for (i in seq_len(nrow(instructions))) {
+    # Then iterate again, this time counting up to the number listed in `digits`
+    for (j in seq_len(instructions$digits[i])) {
+      # If "L", subtract, if "R", add, still modulo 100
+      if (instructions$direction[i] == "L") {
+        position <- (position - 1) %% 100
+      } else if (instructions$direction[i] == "R") {
+        position <- (position + 1) %% 100
+      } else {
+        stop("Invalid input")
+      }
+      
+      # If it is ever equal to 0, increment the counter
+      if (position == 0) {
+        zero_count <- zero_count + 1
+      }
+    }
+  }
+  
+  zero_count
+}
+
+# Put it together with `get_instructions()`
+solve_part_2 <- function(input) {
+  instructions <- get_instructions(input)
+  
+  move_dial(50, instructions)
+}
+```
+
+Let's try it with the test input:
+
+```{r}
+solve_part_2(test_input)
+```
+
+That's correct!
+
+Now let's see how slow it goes with the full real input:
+
+```{r}
+solve_part_2(real_input)
+```
+
+That's correct, and not all that slow! Challenge complete, declare victory.
