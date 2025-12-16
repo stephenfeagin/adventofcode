@@ -48,6 +48,10 @@ What do you get if you add up all of the invalid IDs?
 
 ### Solution
 
+There are two methods to solving this puzzle, and I present both here. The first is to brute force check for matches, and the second is to use regular expressions to check for matches.
+
+#### Method 1: Brute Force
+
 This is relatively easy because it specifies that the invalid IDs are made entirely of repeated digits. If it said that we had to match for any repeated digit sequence at all, it would be significantly tougher. As it is, we can divide each string of digits in half and see if the first half is the same as the second.
 
 First we need to read in the data and separate it by commas. We'll do the test input first.
@@ -68,7 +72,7 @@ get_sequence_from_endpoints <- function(endpoints) {
   seq(endpoints[1], endpoints[2])
 }
 
-generate_id_ranges <- function(id_ranges) {
+generate_id_sequences <- function(id_ranges) {
   # Get the endpoints of each ID range
   char_list <- strsplit(id_ranges, "-")
   
@@ -124,9 +128,9 @@ apply_check_for_repeat <- function(id_sequence) {
 Finally, we can put it all together into a single function to solve the puzzle.
 
 ```{r}
-solve_part_1 <- function(fname) {
+solve_part_1_brute <- function(fname) {
   input <- read_input(fname)
-  id_sequences <- generate_id_ranges(input)
+  id_sequences <- generate_id_sequences(input)
   all_repeats <- sapply(id_sequences, apply_check_for_repeat)
   sum(all_repeats)
 }
@@ -135,7 +139,7 @@ solve_part_1 <- function(fname) {
 Run it first on the test data:
 
 ```{r}
-solve_part_1("test_input.txt")
+solve_part_1_brute("test_input.txt")
 ```
 
 That's the correct answer! Now try it on the real input:
@@ -143,12 +147,40 @@ That's the correct answer! Now try it on the real input:
 ```{r}
 #| cache: true
 
-solve_part_1("input.txt")
+solve_part_1_brute("input.txt")
 ```
 
 Correct again!
 
 I want to mention that I initially ran into trouble with the full real input because of a line in `check_for_repeat()` -- at the end of the function call I converted the collapsed character string into *integer*. Some of the numbers were so large that they exceeded the length of the integer type (32 bit, maximum size `r .Machine$integer.max`) resulting in the warning `NAs introduced by coercion to integer range`, and returning and `NA`. The issue was fixed by changing `as.integer()` to `as.numeric()`, which allows for a larger range of numbers (53 bit, `r .Machine$double.xmax`). There is also the **bit64** package that includes a 64 bit integer using `as.integer64()`. But in this case the default numeric class worked fine.
+
+#### Method 2: Regular Expressions
+
+We can use [regular expressions](https://en.wikipedia.org/wiki/Regular_expression) to solve this. We need to convert the numbers into strings and then search for any group of digits that is repeated. We do this by capturing one group with `(\d+)` and then using a back-reference to see if it repeats, `\1`. Note that in R you must use double backslashes for escaped characters, so it's `\\d` and `\\1`. `grepl()` takes a regex pattern and a character vector and returns a logical vector indicating whether each element was matched or not. We then use that logical vector to index in the original sequence of IDs to extract the matched IDs.
+
+```{r}
+check_for_repeat_regex_1 <- function(id_sequence) {
+  matches <- grepl("^(\\d+)\\1$", as.character(id_sequence))  
+  id_sequence[matches]
+}
+
+solve_part_1_regex <- function(fname) {
+  input <- read_input(fname)
+  id_sequences <- generate_id_sequences(input)
+  all_matches <- lapply(id_sequences, check_for_repeat_regex_1)
+  sum(unlist(all_matches))
+}
+
+solve_part_1_regex("test_input.txt")
+```
+
+Now on the real input:
+
+```{r}
+solve_part_1_regex("input.txt")
+```
+
+That also returns the correct answer.
 
 ## Part 2
 
@@ -176,6 +208,8 @@ Adding up all the invalid IDs in this example produces 4174379265.
 What do you get if you add up all of the invalid IDs using these new rules?
 
 ### Solution
+
+#### Method 1: Brute Force
 
 This is quite a bit trickier than before. The method we will implement will divide each digit string into all of the different combinations of equal length strings and checking whether they are all equal. I will also have to account for the special cases of an ID containing all the same number (e.g. 111) or a single digit number.
 
@@ -249,20 +283,48 @@ apply_check_for_repeat_part_2 <- function(id_sequence) {
   sum(invalid_ids)
 }
 
-solve_part_2 <- function(fname) {
+solve_part_2_brute <- function(fname) {
   input <- read_input(fname)
-  id_sequences <- generate_id_ranges(input)
+  id_sequences <- generate_id_sequences(input)
   all_repeats <- sapply(id_sequences, apply_check_for_repeat_part_2)
   sum(all_repeats)
 }
 
-solve_part_2("test_input.txt")
+solve_part_2_brute("test_input.txt")
 ```
 
 ```{r}
 #| cache: true
 
-solve_part_2("input.txt")
+solve_part_2_brute("input.txt")
 ```
 
 That's correct! Part 2 was tricky but it was manageable in the end. Note that solving for the real puzzle input is quite slow because we're using a series of nested for-loops, which is fairly slow in R. But it's not so slow that we can't run it.
+
+#### Method 2: Regular Expressions
+
+The code for part two using regex is almost identical to the code for part one. The only difference is that I change the regex from `^(\d+)\1$` to `^(\d+)\1+$` -- the extra `+` after `\1` indicates that there may be more than one match of the captured group in parentheses.
+
+```{r}
+check_for_repeat_regex_2 <- function(id_sequence) {
+  matches <- grepl("^(\\d+)\\1+$", as.character(id_sequence))  
+  id_sequence[matches]
+}
+
+solve_part_2_regex <- function(fname) {
+  input <- read_input(fname)
+  id_sequences <- generate_id_sequences(input)
+  all_matches <- lapply(id_sequences, check_for_repeat_regex_2)
+  sum(unlist(all_matches))
+}
+
+solve_part_2_regex("test_input.txt")
+```
+
+Also correct. And then the real puzzle input:
+
+```{r}
+solve_part_2_regex("input.txt")
+```
+
+Also correct, and ran *dramatically* faster.
