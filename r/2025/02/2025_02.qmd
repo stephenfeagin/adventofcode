@@ -219,10 +219,10 @@ check_for_repeat_part_2 <- function(split_id) {
     # Iterate through the starting_indices
     for (j in seq_len(length(starting_indices))) {
       # Just for shorthand
-      k <- starting_indices[j]
+      start <- starting_indices[j]
       
       # Get the subvector from the range, collapse it into a single string
-      subvectors[j] <- paste(split_id[k : (k + i - 1)], collapse = "")
+      subvectors[j] <- paste(split_id[start : (start + i - 1)], collapse = "")
     }
     
     # If all elements are the same, return the ID
