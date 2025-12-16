@@ -1,0 +1,141 @@
+---
+title: "2025 Day 2: Gift Shop"
+format: html
+execute:
+  warning: false
+---
+
+## Part 1
+
+You get inside and take the elevator to its only other stop: the gift shop. "Thank you for visiting the North Pole!" gleefully exclaims a nearby sign. You aren't sure who is even allowed to visit the North Pole, but you know you can access the lobby through here, and from there you can access the rest of the North Pole base.
+
+As you make your way through the surprisingly extensive selection, one of the clerks recognizes you and asks for your help.
+
+As it turns out, one of the younger Elves was playing on a gift shop computer and managed to add a whole bunch of invalid product IDs to their gift shop database! Surely, it would be no trouble for you to identify the invalid product IDs for them, right?
+
+They've even checked most of the product ID ranges already; they only have a few product ID ranges (your puzzle input) that you'll need to check. For example:
+
+```
+11-22,95-115,998-1012,1188511880-1188511890,222220-222224,
+1698522-1698528,446443-446449,38593856-38593862,565653-565659,
+824824821-824824827,2121212118-2121212124
+```
+
+(The ID ranges are wrapped here for legibility; in your input, they appear on a single long line.)
+
+The ranges are separated by commas (,); each range gives its first ID and last ID separated by a dash (-).
+
+Since the young Elf was just doing silly patterns, you can find the invalid IDs by looking for any ID which is made only of some sequence of digits repeated twice. So, 55 (5 twice), 6464 (64 twice), and 123123 (123 twice) would all be invalid IDs.
+
+None of the numbers have leading zeroes; 0101 isn't an ID at all. (101 is a valid ID that you would ignore.)
+
+Your job is to find all of the invalid IDs that appear in the given ranges. In the above example:
+
+11-22 has two invalid IDs, 11 and 22.
+95-115 has one invalid ID, 99.
+998-1012 has one invalid ID, 1010.
+1188511880-1188511890 has one invalid ID, 1188511885.
+222220-222224 has one invalid ID, 222222.
+1698522-1698528 contains no invalid IDs.
+446443-446449 has one invalid ID, 446446.
+38593856-38593862 has one invalid ID, 38593859.
+The rest of the ranges contain no invalid IDs.
+Adding up all the invalid IDs in this example produces 1227775554.
+
+What do you get if you add up all of the invalid IDs?
+
+### Solution
+
+This is relatively easy because it specifies that the invalid IDs are made entirely of repeated digits. If it said that we had to match for any repeated digit sequence at all, it would be significantly tougher. As it is, we can divide each string of digits in half and see if the first half is the same as the second.
+
+First we need to read in the data and separate it by commas. We'll do the test input first.
+
+```{r}
+#| warning: false
+
+read_input <- function(fname) {
+  raw_string <- readLines(fname)
+  strsplit(raw_string, ",")[[1]]
+}
+```
+
+We can then make a list of vectors where each element contains the digit sequence of the ranges. We first define a function to take a character vector with the endpoints and create a vector with the sequence for those endpoints. Note that R will do some automatic type casting in cases like this, so we don't even need to convert the character vector to numeric in order to get the sequence. We then apply that function to the list of ID ranges.
+
+```{r}
+get_sequence_from_endpoints <- function(endpoints) {
+  seq(endpoints[1], endpoints[2])
+}
+
+generate_id_ranges <- function(id_ranges) {
+  # Get the endpoints of each ID range
+  char_list <- strsplit(id_ranges, "-")
+  
+  # Apply the sequence function over the list
+  lapply(char_list, get_sequence_from_endpoints)
+}
+```
+
+We can now iterate through each ID and check whether the first half matches the second half. To do that, we can use `strsplit()` to break up the numbers into their component characters and check for identical sequences. We can then iterate through the list of ID ranges, check for repeats, and then return either the ID itself or 0. That way we can simply sum the results of applying the function over the list.
+
+```{r}
+check_for_repeat <- function(split_id) {
+  n <- length(split_id)
+  
+  # If the length is not divisible by 2, it necessarily cannot contain only a
+  # repeated digit sequence, so return 0.
+  if (n %% 2 != 0) {
+    return(0)
+  }
+  
+  # Get the subvectors for each half and check if they are all the same
+  first_half <- split_id[1 : (n /2)]
+  second_half <- split_id[((n / 2) + 1) : n]
+  if (all(first_half == second_half)) {
+    # Convert back into numeric
+    return(as.numeric(paste(split_id, collapse = "")))
+  } else {
+    return(0)
+  }
+}
+```
+
+We can then create a function to take in a numeric vector representing the sequence of IDs (i.e. 11, 12, ..., 22) and return the sum of repeated IDs. First we cast the vector into character, apply `strsplit()`, then use `check_for_repeat()` to determine whether each ID is a repeated sequence. We then return the sum of that list.
+
+```{r}
+apply_check_for_repeat <- function(id_sequence) {
+  # Cast each ID as character then split into individual characters
+  char_seq <- sapply(id_sequence, as.character)
+  split_ids <- sapply(char_seq, strsplit, "")
+  
+  # Apply `check_for_repeat` on each element, then return the sum
+  invalid_ids <- sapply(split_ids, check_for_repeat)
+  sum(invalid_ids)
+}
+```
+
+Finally, we can put it all together into a single function to solve the puzzle.
+
+```{r}
+solve_part_1 <- function(fname) {
+  input <- read_input(fname)
+  id_sequences <- generate_id_ranges(input)
+  all_repeats <- sapply(id_sequences, apply_check_for_repeat)
+  sum(all_repeats)
+}
+```
+
+Run it first on the test data:
+
+```{r}
+solve_part_1("test_input.txt")
+```
+
+That's the correct answer! Now try it on the real input:
+
+```{r}
+solve_part_1("input.txt")
+```
+
+Correct again!
+
+I want to mention that I initially ran into trouble with the full real input because of a line in `check_for_repeat()` -- at the end of the function call I converted the collapsed character string into *integer*. Some of the numbers were so large that they exceeded the length of the integer type (32 bit, maximum size `r .Machine$integer.max`) resulting in the warning `NAs introduced by coercion to integer range`, and returning and `NA`. The issue was fixed by changing `as.integer()` to `as.numeric()`, which allows for a larger range of numbers (53 bit, `r .Machine$double.xmax`). There is also the **bit64** package that includes a 64 bit integer using `as.integer64()`. But in this case the default numeric class worked fine.
