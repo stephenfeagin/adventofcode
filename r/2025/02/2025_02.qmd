@@ -7,6 +7,8 @@ execute:
 
 ## Part 1
 
+### Prompt
+
 You get inside and take the elevator to its only other stop: the gift shop. "Thank you for visiting the North Pole!" gleefully exclaims a nearby sign. You aren't sure who is even allowed to visit the North Pole, but you know you can access the lobby through here, and from there you can access the rest of the North Pole base.
 
 As you make your way through the surprisingly extensive selection, one of the clerks recognizes you and asks for your help.
@@ -77,7 +79,13 @@ generate_id_ranges <- function(id_ranges) {
 
 We can now iterate through each ID and check whether the first half matches the second half. To do that, we can use `strsplit()` to break up the numbers into their component characters and check for identical sequences. We can then iterate through the list of ID ranges, check for repeats, and then return either the ID itself or 0. That way we can simply sum the results of applying the function over the list.
 
+We also define a function to easily convert from split character IDs, like `c("1", "1")`, to numeric values, like `11`.
+
 ```{r}
+convert_split_id_to_numeric <- function(split_id) {
+  as.numeric(paste(split_id, collapse = ""))
+}
+
 check_for_repeat <- function(split_id) {
   n <- length(split_id)
   
@@ -92,7 +100,7 @@ check_for_repeat <- function(split_id) {
   second_half <- split_id[((n / 2) + 1) : n]
   if (all(first_half == second_half)) {
     # Convert back into numeric
-    return(as.numeric(paste(split_id, collapse = "")))
+    return(convert_split_id_to_numeric(split_id))
   } else {
     return(0)
   }
@@ -133,9 +141,128 @@ solve_part_1("test_input.txt")
 That's the correct answer! Now try it on the real input:
 
 ```{r}
+#| cache: true
+
 solve_part_1("input.txt")
 ```
 
 Correct again!
 
 I want to mention that I initially ran into trouble with the full real input because of a line in `check_for_repeat()` -- at the end of the function call I converted the collapsed character string into *integer*. Some of the numbers were so large that they exceeded the length of the integer type (32 bit, maximum size `r .Machine$integer.max`) resulting in the warning `NAs introduced by coercion to integer range`, and returning and `NA`. The issue was fixed by changing `as.integer()` to `as.numeric()`, which allows for a larger range of numbers (53 bit, `r .Machine$double.xmax`). There is also the **bit64** package that includes a 64 bit integer using `as.integer64()`. But in this case the default numeric class worked fine.
+
+## Part 2
+
+### Prompt
+
+The clerk quickly discovers that there are still invalid IDs in the ranges in your list. Maybe the young Elf was doing other silly patterns as well?
+
+Now, an ID is invalid if it is made only of some sequence of digits repeated at least twice. So, 12341234 (1234 two times), 123123123 (123 three times), 1212121212 (12 five times), and 1111111 (1 seven times) are all invalid IDs.
+
+From the same example as before:
+
+11-22 still has two invalid IDs, 11 and 22.
+95-115 now has two invalid IDs, 99 and 111.
+998-1012 now has two invalid IDs, 999 and 1010.
+1188511880-1188511890 still has one invalid ID, 1188511885.
+222220-222224 still has one invalid ID, 222222.
+1698522-1698528 still contains no invalid IDs.
+446443-446449 still has one invalid ID, 446446.
+38593856-38593862 still has one invalid ID, 38593859.
+565653-565659 now has one invalid ID, 565656.
+824824821-824824827 now has one invalid ID, 824824824.
+2121212118-2121212124 now has one invalid ID, 2121212121.
+Adding up all the invalid IDs in this example produces 4174379265.
+
+What do you get if you add up all of the invalid IDs using these new rules?
+
+### Solution
+
+This is quite a bit trickier than before. The method we will implement will divide each digit string into all of the different combinations of equal length strings and checking whether they are all equal. I will also have to account for the special cases of an ID containing all the same number (e.g. 111) or a single digit number.
+
+We make a new function to check for repeats.
+
+```{r}
+check_for_repeat_part_2 <- function(split_id) {
+  # If there's only one element, return 0 because it can't be a repeated sequence
+  if (length(split_id) == 1) {
+    return(0)
+  }
+  
+  # If all elements are the same, it's necessarily a repeated sequence, 
+  # so return that ID
+  if (length(unique(split_id)) == 1) {
+    return(convert_split_id_to_numeric(split_id))
+  }
+  
+  n <- length(split_id)
+  half_n <- floor(n / 2)
+  
+  # The possible group numbers are the integers from 1 to n/2
+  possible_groups <- 1:half_n
+  for (i in possible_groups) {
+    # Skip i=1, because we have already checked for the case of all digits being
+    # equal
+    if (i == 1) {
+      next
+    }
+    
+    # If you can't divide n evenly by i, skip to the next i
+    if (n %% i != 0) {
+      next
+    }
+    
+    # Get the starting points of the different groups and initialize a vector
+    # to contain the results
+    starting_indices <- seq(1, n, by = i)
+    subvectors <- numeric(length(starting_indices))
+    
+    # Iterate through the starting_indices
+    for (j in seq_len(length(starting_indices))) {
+      # Just for shorthand
+      k <- starting_indices[j]
+      
+      # Get the subvector from the range, collapse it into a single string
+      subvectors[j] <- paste(split_id[k : (k + i - 1)], collapse = "")
+    }
+    
+    # If all elements are the same, return the ID
+    if (length(unique(subvectors)) == 1) {
+      return(convert_split_id_to_numeric(split_id))
+    }
+  }
+  
+  # If you haven't returned the ID throughout the loop, return 0
+  return(0)
+}
+```
+
+The function to apply the function is the same, just updating it to use the new part 2 function. We can then put it together and solve the puzzle.
+
+```{r}
+apply_check_for_repeat_part_2 <- function(id_sequence) {
+  # Cast each ID as character then split into individual characters
+  char_seq <- sapply(id_sequence, as.character)
+  split_ids <- sapply(char_seq, strsplit, "")
+  
+  # Apply `check_for_repeat` on each element, then return the sum
+  invalid_ids <- sapply(split_ids, check_for_repeat_part_2)
+  sum(invalid_ids)
+}
+
+solve_part_2 <- function(fname) {
+  input <- read_input(fname)
+  id_sequences <- generate_id_ranges(input)
+  all_repeats <- sapply(id_sequences, apply_check_for_repeat_part_2)
+  sum(all_repeats)
+}
+
+solve_part_2("test_input.txt")
+```
+
+```{r}
+#| cache: true
+
+solve_part_2("input.txt")
+```
+
+That's correct! Part 2 was tricky but it was manageable in the end. Note that solving for the real puzzle input is quite slow because we're using a series of nested for-loops, which is fairly slow in R. But it's not so slow that we can't run it.
