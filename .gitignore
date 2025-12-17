@@ -6,4 +6,5 @@
 *_cache/
 *.html
 *.so
+**/input.txt
 AOC
