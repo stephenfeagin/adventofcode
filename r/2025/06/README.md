@@ -1,0 +1,109 @@
+# 2025 Day 6: Trash Compactor
+
+
+[Link to puzzle](https://adventofcode.com/2025/day/6)
+
+## Part 1
+
+Read input
+
+``` r
+read_input <- function(fname) {
+  read.delim(fname, header = FALSE)
+}
+
+read_input("test_input.txt")
+```
+
+                   V1
+    1 123 328  51 64 
+    2  45 64  387 23 
+    3   6 98  215 314
+    4 *   +   *   +  
+
+That didn’t work as expected. Inspecting the input files, I see that the
+values are separated by a mix of spaces and tabs, which R is not able to
+parse into a rectangular data structure. I am going to read in the data
+and replace any white space with a single space. I can then separate the
+lines into their component parts and collapse them into a matrix, and
+return that along with the symbols.
+
+``` r
+parse_input <- function(fname) {
+  lines <- readLines(fname)
+  lines_parsed <- trimws(gsub("\\s+", " ", lines))
+  split_list <- strsplit(lines_parsed, " ")
+  number_lines <- split_list[1:(length(split_list) - 1)]
+  symbols <- split_list[[length(split_list)]]
+  number_matrix <- matrix(
+    as.numeric(unlist(number_lines)), 
+    byrow = TRUE, 
+    nrow = length(number_lines)
+  )
+  
+  list(numbers = number_matrix, symbols = symbols)
+}
+```
+
+We can then go column by column, determining which operation to use and
+applying it to that column of numbers.
+
+``` r
+solve_part_1 <- function(fname) {
+  # Read in the input file
+  input <- parse_input(fname)
+  
+  # Initialize a vector to hold the results of each column
+  results <- numeric(ncol(input$numbers))
+  
+  # Iterate over the columns
+  for (i in seq_len(ncol(input$numbers))) {
+    # Get the operation symbol associated with each column
+    operation <- input$symbols[i]
+    # Assign a variable `func` to hold either the `prod` or `sum` function,
+    # which is then applied to the column of numbers.
+    if (operation == "*") {
+      func <- prod
+    } else if (operation == "+") {
+      func <- sum
+    } else {
+      stop("Invalid symbol")
+    }
+    # Apply the function and store it in the `results` vector
+    results[i] <- func(input$numbers[, i])
+  }
+  
+  sum(results)
+}
+```
+
+Test data:
+
+``` r
+solve_part_1("test_input.txt")
+```
+
+    [1] 4277556
+
+That matches the example in the prompt.
+
+Real data, using `as.character()` to get around scientific notation:
+
+``` r
+start <- Sys.time()
+as.character(solve_part_1("input.txt"))
+```
+
+    [1] "5227286044585"
+
+``` r
+end <- Sys.time()
+```
+
+``` r
+end - start
+```
+
+    Time difference of 0.005818129 secs
+
+Correct!
