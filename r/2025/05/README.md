@@ -130,7 +130,7 @@ solve_part_2 <- function(fname) {
       endpoints_df <- bind_rows(second, endpoints_df)
     } else {
       # If the two ranges overlap, take the first start and the second end
-      # and prepend the original data frame
+      # and prepend to the original data frame
       expanded_range <- tibble(start = first$start, end = second$end)
       endpoints_df <- bind_rows(expanded_range, endpoints_df)
     }
@@ -154,7 +154,7 @@ end <- Sys.time()
 end - start
 ```
 
-    Time difference of 0.0126009 secs
+    Time difference of 0.01249409 secs
 
 That’s correct for the test input. Now the real input:
 
@@ -170,6 +170,6 @@ end <- Sys.time()
 end - start
 ```
 
-    Time difference of 0.03764296 secs
+    Time difference of 0.03731585 secs
 
 Correct!

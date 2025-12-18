@@ -117,7 +117,7 @@ solve_part_2 <- function(fname) {
       endpoints_df <- bind_rows(second, endpoints_df)
     } else {
       # If the two ranges overlap, take the first start and the second end
-      # and prepend the original data frame
+      # and prepend to the original data frame
       expanded_range <- tibble(start = first$start, end = second$end)
       endpoints_df <- bind_rows(expanded_range, endpoints_df)
     }
