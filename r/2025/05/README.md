@@ -85,12 +85,13 @@ suppressPackageStartupMessages(library(dplyr))
 ```
 
 We now only need to determine how many IDs can be considered fresh. In
-order to do this, I first order the endpoints data by start. Then I
-compare the firsttwo rows of the endpoints data at a time and check
-whether their ranges overlap. If they do, I create a new row from the
-expanded range (i.e. old start to new end). If they do not, that range
-is added to a new data frame that contains only the non-overlapping
-ranges. I then get the length of each range and sum those lengths.
+order to do this, I first order the endpoints data by start and end
+points. Then I compare the first two rows of the endpoints data at a
+time and check whether their ranges overlap. If they do, I create a new
+row from the expanded range (i.e. old start to new end). If they do not,
+that range is added to a new data frame that contains only the
+non-overlapping ranges. I then get the length of each range and sum
+those lengths.
 
 ``` r
 solve_part_2 <- function(fname) {
@@ -153,7 +154,7 @@ end <- Sys.time()
 end - start
 ```
 
-    Time difference of 0.012501 secs
+    Time difference of 0.0126009 secs
 
 That’s correct for the test input. Now the real input:
 
@@ -169,6 +170,6 @@ end <- Sys.time()
 end - start
 ```
 
-    Time difference of 0.03765798 secs
+    Time difference of 0.03764296 secs
 
 Correct!
