@@ -91,3 +91,7 @@ end - start
 ```
 
 Correct!
+
+## Part 2
+
+Wow part 2 is much harder.
