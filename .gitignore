@@ -7,4 +7,5 @@
 *.html
 *.so
 **/input.txt
+**/test_input.txt
 AOC
