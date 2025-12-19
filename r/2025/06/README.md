@@ -104,6 +104,10 @@ end <- Sys.time()
 end - start
 ```
 
-    Time difference of 0.005818129 secs
+    Time difference of 0.005519867 secs
 
 Correct!
+
+## Part 2
+
+Wow part 2 is much harder.
