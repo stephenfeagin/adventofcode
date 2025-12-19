@@ -1,0 +1,77 @@
+---
+title: "2024 Day 1: Historian Hysteria"
+format: gfm
+output-file: "README.md"
+execute:
+  warning: false
+---
+
+[Link to puzzle](https://adventofcode.com/2024/day/2)
+
+## Part 1
+
+We will use **dplyr**'s `lag()` function to offset each report and take the difference. We then scrub the `NA` that results from the offset. Finally, we check for monotonicity and boundedness, then return whether both are true.
+
+```{r}
+check_safety <- function(report) {
+  diffs <- report - dplyr::lag(report)
+  diffs_scrubbed <- diffs[!is.na(diffs)]
+  monotonic <- all(diffs_scrubbed > 0) || all(diffs_scrubbed < 0)
+  between_1_and_3 <- all(abs(diffs_scrubbed) > 0) && all(abs(diffs_scrubbed) <= 3)
+  
+  monotonic && between_1_and_3
+}
+
+solve_part_1 <- function(fname) {
+  lines <- readLines(here::here("2024", "02", fname))
+  lines_split <- strsplit(lines, "\\s+")
+  lines_numeric <- lapply(lines_split, as.numeric)
+  
+  sum(sapply(lines_numeric, check_safety))
+}
+
+solve_part_1("test_input.txt")
+```
+
+```{r}
+start <- Sys.time()
+solve_part_1("input.txt")
+end <- Sys.time()
+end - start
+```
+
+## Part 2
+
+We now have to check if each report is safe if we remove any level. For a report, we first check if it is safe to begin with. We then iterate through the report removing one element at a time, checking if the resulting vector is safe. If we get through the whole report without any of them returning `TRUE`, we return `FALSE`.
+
+```{r}
+problem_dampener <- function(report) {
+  if (check_safety(report)) {
+    return(TRUE)
+  }
+  for (i in seq_along(report)) {
+    if (check_safety(report[-i])) {
+      return(TRUE)
+    }
+  }
+
+  return(FALSE)
+}
+
+solve_part_2 <- function(fname) {
+  lines <- readLines(here::here("2024", "02", fname))
+  lines_split <- strsplit(lines, "\\s+")
+  lines_numeric <- lapply(lines_split, as.numeric)
+  sum(sapply(lines_numeric, problem_dampener))
+}
+
+solve_part_2("test_input.txt")
+```
+
+```{r}
+start <- Sys.time()
+solve_part_2("input.txt")
+end <- Sys.time()
+end - start
+```
+
