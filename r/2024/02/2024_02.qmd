@@ -1,5 +1,5 @@
 ---
-title: "2024 Day 1: Historian Hysteria"
+title: "2024 Day 2: Red-Nosed Reports"
 format: gfm
 output-file: "README.md"
 execute:
