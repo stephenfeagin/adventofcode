@@ -1,0 +1,108 @@
+# 2024 Day 1: Historian Hysteria
+
+
+[Link to puzzle](https://adventofcode.com/2024/day/1)
+
+## Part 1
+
+Essentially you just sort the two vectors of digits and find the sum of
+the absolute differences.
+
+``` r
+solve_part_1 <- function(fname) {
+  # Read lines
+  lines <- readLines(fname)
+  
+  # Split each line by white space to get a list of pairs
+  lines_split <- strsplit(lines, split = "\\s+")
+  
+  # Convert to numeric
+  lines_numeric <- sapply(lines_split, as.numeric)
+  
+  # This transposes the matrix of pairs but the order is maintained, so we can
+  # just extract the first and second rows instead of columns. We sort them.
+  first_ordered <- sort(lines_numeric[1,])
+  second_ordered <- sort(lines_numeric[2,])
+  
+  # Return the sum of the absolute difference between the two
+  sum(abs(first_ordered - second_ordered))
+}
+```
+
+``` r
+solve_part_1("test_input.txt")
+```
+
+    [1] 11
+
+Try it on the real data:
+
+``` r
+start <- Sys.time()
+solve_part_1("input.txt")
+```
+
+    [1] 2000468
+
+``` r
+end <- Sys.time()
+end - start
+```
+
+    Time difference of 0.002948999 secs
+
+Correct!
+
+## Part 2
+
+This also isn’t too difficult. Simply iterate over the numbers in the
+first vector and count how many times it’s in the second vector, then
+multiply the two quantities.
+
+``` r
+solve_part_2 <- function(fname) {
+  # Read lines
+  lines <- readLines(fname)
+  
+  # Split each line by white space to get a list of pairs
+  lines_split <- strsplit(lines, split = "\\s+")
+  
+  # Convert to numeric
+  lines_numeric <- sapply(lines_split, as.numeric)
+  
+  # Initialize a vector to store results
+  similarities <- numeric(ncol(lines_numeric))
+  
+  # Iterate through columns
+  for (i in seq_len(ncol(lines_numeric))) {
+    # Extract the digit from the first row
+    digit <- lines_numeric[1, i]
+    # Check count of occurrences in the second row
+    times <- sum(lines_numeric[2,] == digit)
+    # Populate the results vector with the product
+    similarities[i] <- digit * times
+  }
+  # Return the sum
+  sum(similarities)
+}
+
+solve_part_2("test_input.txt")
+```
+
+    [1] 31
+
+``` r
+start <- Sys.time()
+solve_part_2("input.txt")
+```
+
+    [1] 18567089
+
+``` r
+end <- Sys.time()
+end - start
+```
+
+    Time difference of 0.004379034 secs
+
+Declare victory!
