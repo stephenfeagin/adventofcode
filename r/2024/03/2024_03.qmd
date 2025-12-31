@@ -1,0 +1,71 @@
+---
+title: "2024 Day 3: Mull It Over"
+format: gfm
+output-file: "README.md"
+execute:
+  warning: false
+---
+
+[Link to puzzle](https://adventofcode.com/2024/day/2)
+
+## Part 1
+
+I'm going to need **stringr** to work with this messy character data.
+
+```{r}
+library(stringr)
+```
+
+
+```{r}
+fname <- "input.txt"
+lines <- readLines(fname)
+
+regex <- "mul\\(\\d{1,3},\\d{1,3}\\)"
+muls <- str_extract_all(lines, regex, simplify = TRUE)
+nums <- str_extract_all(muls, "\\d+")
+nums <- lapply(nums, as.numeric)
+sum(sapply(nums, prod))
+```
+
+## Part 2
+
+We now need `do()` to enable future `mul` instructions and `don't()` to disable them. I can extract the indices of the `do()` and `don't()` instances and only read the `mul` between them.
+
+```{r}
+l1 <- lines[1]
+do_pattern <- "do\\(\\)"
+dont_pattern <- "don\\'t\\(\\)"
+start <- str_locate(l1, do_pattern)[1]
+new_substring <- substr(l1, start = start, stop = nchar(l1))
+end <- str_locate(new_substring, dont_pattern)[2]
+first_substring <- substr(new_substring, 1, end)
+muls <- str_extract_all(first_substring, muls_regex, simplify = TRUE)
+nums <- str_extract_all(muls, "\\d+")
+nums <- lapply(nums, as.numeric)
+sum(sapply(nums, prod))
+
+
+process_one_line <- function(line) {
+  muls_regex <- "mul\\(\\d{1,3},\\d{1,3}\\)"
+  sum_of_muls <- 0
+  start <- str_locate(line, do_pattern)[1]
+  next_substring <- line
+  while (!is.na(next_substring)) {
+    end <- str_locate(next_substring, dont_pattern)[2]
+    new_substring <- substr(next_substring, 1, ifelse(is.na(end), nchar(next_substring), end))
+    muls <- str_extract_all(new_substring, muls_regex, simplify = TRUE)
+    nums <- str_extract_all(muls, "\\d+")
+    nums <- lapply(nums, as.numeric)
+    sum_of_muls <- sum_of_muls + sum(sapply(nums, prod))
+    next_substring <- substr(next_substring, start = end, stop = nchar(next_substring))
+    start <- str_locate(next_substring, do_pattern)[1]
+    next_substring <- substr(next_substring, start = start, stop = nchar(next_substring))
+  }
+  
+  sum_of_muls
+}
+
+sum(unlist(lapply(lines, process_one_line)))
+```
+

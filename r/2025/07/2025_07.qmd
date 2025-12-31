@@ -1,0 +1,32 @@
+---
+title: "2025 Day 7: Laboratories"
+format: gfm
+output-file: "README.md"
+execute:
+  warning: false
+---
+
+[Link to puzzle](https://adventofcode.com/2025/day/7)
+
+## Part 1
+
+```{r}
+input <- readLines("test_input.txt")
+input_split <- strsplit(input, "")
+start <- which(input_split[[1]] == "S")
+input_split[[2]][start] <- "|"
+running_total <- 0
+for (i in 2:(length(input_split) - 1)) {
+  beams <- grep("\\|", input_split[[i]])
+  splitters <- grep("\\^", input_split[[i+1]])
+  running_total <- running_total + sum(splitters %in% beams)
+  next_beams <- c(splitters - 1, splitters + 1)
+  next_beams <- unique(next_beams[which(!(next_beams %in% splitters))])
+  input_split[[i+1]][next_beams] <- "|"
+  if (i == length(input_split) - 1) {
+    break
+  }
+  input_split[[i+2]][next_beams] <- "|"
+}
+```
+
